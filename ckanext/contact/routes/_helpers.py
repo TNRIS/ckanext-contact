@@ -180,6 +180,11 @@ def submit():
         for plugin in PluginImplementations(IContact):
             plugin.mail_alter(mail_dict, data_dict)
 
+        log.info('Attempting to email {}'.format( mail_dict["recipient_email"] ))
+        log.info('Attempting to cc {}'.format( mail_dict["cc"] ))
+
+        breakpoint()
+
         try:
             mailer.mail_recipient(**mail_dict)
         except (mailer.MailerException, socket.error):
