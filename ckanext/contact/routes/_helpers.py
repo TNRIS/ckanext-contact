@@ -13,6 +13,7 @@ from ckan.plugins import PluginImplementations, toolkit
 from ckanext.contact import recaptcha
 from ckanext.contact.interfaces import IContact
 from datetime import datetime, timezone
+from email import utils
 
 from flask import render_template
 
@@ -173,18 +174,16 @@ def submit():
             if( pkg["data_contact_email"] ): 
                 # 'cc' needs to be in the mail header, and passed in as a parameter to mail_recipient both due to the way smtlib.sendmail works
                 mail_dict["headers"]["cc"] =  mail_dict["recipient_email"] 
-                mail_dict["cc"] =  [mail_dict["recipient_email"]]
+                mail_dict["cc"] =  [utils.formataddr((mail_dict["recipient_name"], mail_dict["recipient_email"]))]
+
+
                 mail_dict["recipient_email"] = pkg["data_contact_email"]
+                # We don't track data author names, so just set recipient_name to empty
+                mail_dict["recipient_name"] = ""
 
         # allow other plugins to modify the mail_dict
         for plugin in PluginImplementations(IContact):
             plugin.mail_alter(mail_dict, data_dict)
-
-        log.info(data_dict)
-        log.info(mail_dict)
-        log.info('Attempting to email {}'.format( mail_dict["recipient_email"] ))
-        if "cc" in mail_dict:
-            log.info('Attempting to cc {}'.format( mail_dict["cc"] ))
 
         try:
             mailer.mail_recipient(**mail_dict)
