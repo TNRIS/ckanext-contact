@@ -17,7 +17,7 @@ from email import utils
 
 from flask import render_template
 
-from jinja2 import escape
+from markupsafe import escape
 
 
 log = logging.getLogger(__name__)
@@ -172,11 +172,9 @@ def submit():
         if( data_dict["contact_dest"] != "data-hub-support" and "pkg-id" in data_dict and data_dict["pkg-id"] != '' ):
             pkg = toolkit.get_action('package_show')(None, {'id': data_dict["pkg-id"] } )
             if( pkg["data_contact_email"] ): 
-                # 'cc' needs to be in the mail header, and passed in as a parameter to mail_recipient both due to the way smtlib.sendmail works
-                mail_dict["headers"]["cc"] =  mail_dict["recipient_email"] 
-                mail_dict["cc"] =  [utils.formataddr((mail_dict["recipient_name"], mail_dict["recipient_email"]))]
-
-
+                # Set cc to send message to data-hub-support
+                mail_dict["headers"]["cc"] =  utils.formataddr((mail_dict["recipient_name"], mail_dict["recipient_email"]))
+                # Set recipient to data_contact_email from package
                 mail_dict["recipient_email"] = pkg["data_contact_email"]
                 # We don't track data author names, so just set recipient_name to empty
                 mail_dict["recipient_name"] = ""
