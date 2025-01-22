@@ -13,6 +13,7 @@ from ckan.plugins import PluginImplementations, toolkit
 from ckanext.contact import recaptcha
 from ckanext.contact.interfaces import IContact
 from datetime import datetime, timezone
+from email import utils
 
 from flask import render_template
 
@@ -171,8 +172,12 @@ def submit():
         if( data_dict["contact_dest"] != "data-hub-support" and "pkg-id" in data_dict and data_dict["pkg-id"] != '' ):
             pkg = toolkit.get_action('package_show')(None, {'id': data_dict["pkg-id"] } )
             if( pkg["data_contact_email"] ): 
-                mail_dict["headers"]["cc"] =  mail_dict["recipient_email"] 
+                # Set cc to send message to data-hub-support
+                mail_dict["headers"]["cc"] =  utils.formataddr((mail_dict["recipient_name"], mail_dict["recipient_email"]))
+                # Set recipient to data_contact_email from package
                 mail_dict["recipient_email"] = pkg["data_contact_email"]
+                # We don't track data author names, so just set recipient_name to empty
+                mail_dict["recipient_name"] = ""
 
         # allow other plugins to modify the mail_dict
         for plugin in PluginImplementations(IContact):
